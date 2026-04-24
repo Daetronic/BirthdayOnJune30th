@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DAEMONOPIA • Birthday Countdown</title>
+    <title>daetronic bday woo!!</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
@@ -54,7 +54,6 @@
             font-size: clamp(2.5rem, 5vw, 6rem);
         }
 
-        /* Poll card improvements */
         .poll-card {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -109,7 +108,7 @@
             <span id="targetYear" class="font-bold text-pink-400"></span>
         </div>
 
-        <!-- 🔥 VOTING POLL (now guaranteed to show) -->
+        <!-- VOTING POLL -->
         <div class="mt-16 w-full max-w-5xl mx-auto px-4">
             <div class="flex items-center justify-between mb-6">
                 <h3 class="text-3xl font-bold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-pink-400">
@@ -122,8 +121,9 @@
             </div>
 
             <div id="firebase-status" class="hidden mb-6 text-center text-amber-300 text-sm font-mono bg-amber-900/30 border border-amber-400/50 rounded-2xl py-3 px-6">
-                ⚠️ Live voting is in DEMO mode.<br>
-                Replace the Firebase config in the code to enable real global votes from everyone.
+                ⚠️ You are in <strong>DEMO MODE</strong>.<br>
+                Votes work locally right now.<br>
+                Replace the Firebase config below to make votes global for everyone on GitHub.
             </div>
 
             <p class="text-center text-cyan-300/80 mb-8 text-sm md:text-base">
@@ -132,7 +132,7 @@
             </p>
 
             <div id="poll-container" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Populated instantly by JavaScript -->
+                <!-- Populated instantly -->
             </div>
 
             <div class="mt-6 flex justify-center items-center gap-3 text-pink-300 text-sm font-mono">
@@ -159,7 +159,7 @@
 
     <script>
         // ============================
-        // 🔥 FIREBASE CONFIG — YOU MUST REPLACE THIS!
+        // 🔥 FIREBASE CONFIG — REPLACE THIS!
         // ============================
 		const firebaseConfig = {
 		  apiKey: "AIzaSyDlUAMtMaDlUTEeCMVEU2mA_y5parDBQ9k",
@@ -171,7 +171,7 @@
 		  measurementId: "G-EQFRR8757B"
 		};
 
-        // Initialize Firebase safely
+        // Initialize Firebase
         let db = null;
         let isFirebaseReady = false;
         try {
@@ -179,34 +179,36 @@
                 firebase.initializeApp(firebaseConfig);
                 db = firebase.firestore();
                 isFirebaseReady = true;
-                console.log('%c✅ Firebase connected successfully', 'color:#00ff00');
+                console.log('%c✅ Firebase connected', 'color:#00ff00');
             }
         } catch (e) {
-            console.warn('%c⚠️ Firebase init failed (probably placeholder config)', 'color:#ffaa00');
+            console.warn('%c⚠️ Firebase not configured yet', 'color:#ffaa00');
         }
 
+        // ============================
+        // SONGS
+        // ============================
                const songs = [
             {
                 id: "classic",
-                name: "🎵 God Is - KanYe West",
+                name: "God Is - KanYe West",
                 url: "https://files.catbox.moe/lq7ic3.mp3",
                 offset: 30   // starts playing 30 seconds BEFORE June 30th
             },
             {
                 id: "rock",
-                name: "🎵 All Of The Lights - KanYe West",
+                name: "All Of The Lights - KanYe West",
                 url: "https://files.catbox.moe/bqz6wc.mp3",
                 offset: 20    // starts playing 10 seconds BEFORE June 30th
             },
             {
                 id: "cyber",
-                name: "🎵 CARNIVAL - KanYe West",
+                name: "CARNIVAL - KanYe West",
                 url: "https://files.catbox.moe/bqz6wc.mp3",	
                 offset: 45    // starts playing 45 seconds BEFORE June 30th
             }
         ];
 
-        // Global state
         let currentVotes = {};
         let cachedWinner = songs[0];
         let audioTriggered = false;
@@ -224,7 +226,6 @@
 
         function pad(num, size = 2) { return String(num).padStart(size, '0'); }
 
-        // Confetti (unchanged)
         function createParticle() {
             const colors = ['#ff00ff', '#00ffff', '#ffff00', '#00ff00', '#ff0088', '#8800ff'];
             return {
@@ -276,36 +277,53 @@
             setTimeout(() => { if (confettiRunning) particles = particles.slice(0, 200); }, 45000);
         }
 
-        // Firestore helpers
         async function loadVotes() {
             if (!db) return;
             try {
                 const doc = await db.collection('poll').doc('birthday').get();
                 if (doc.exists) currentVotes = doc.data().votes || {};
             } catch (e) {
-                console.warn("Firestore load failed (ad-blocker or config/rules issue)", e);
+                console.warn("Firestore load failed", e);
             }
         }
 
+        // ========================
+        // FIXED VOTING FUNCTION
+        // ========================
         async function castVote(songId) {
-            if (!db || !isFirebaseReady) {
-                alert("🔧 Live voting is in demo mode.\n\nReplace the Firebase config in the code (and set Firestore rules to allow read/write) to make votes global!");
-                return;
-            }
             if (localStorage.getItem('hasVoted')) {
                 alert("You already voted once! Thanks 🎉");
                 return;
             }
+
+            // DEMO MODE (when Firebase not set up)
+            if (!db || !isFirebaseReady) {
+                currentVotes[songId] = (currentVotes[songId] || 0) + 1;
+                localStorage.setItem('hasVoted', 'true');
+                localStorage.setItem('votedFor', songId);
+                cachedWinner = calculateWinner();
+                renderPoll();
+                alert("✅ Vote recorded (DEMO MODE)\n\nYour vote is saved locally.\nTo make votes global for everyone, replace the Firebase config in the code.");
+                return;
+            }
+
+            // REAL Firebase voting
             try {
                 await db.collection('poll').doc('birthday').set({
                     [`votes.${songId}`]: firebase.firestore.FieldValue.increment(1)
                 }, { merge: true });
+
                 localStorage.setItem('hasVoted', 'true');
                 localStorage.setItem('votedFor', songId);
+
                 await loadVotes();
+                cachedWinner = calculateWinner();
                 renderPoll();
+
+                alert("✅ Vote sent to the global poll!");
             } catch (e) {
-                alert("Vote failed – check your Firebase rules (allow read/write for now)");
+                console.error(e);
+                alert("Vote failed.\n\nMake sure your Firestore rules allow read/write (for testing only).");
             }
         }
 
@@ -319,7 +337,6 @@
             return winner;
         }
 
-        // MAIN FIX: This function now always runs and always shows the cards
         function renderPoll() {
             const container = document.getElementById('poll-container');
             container.innerHTML = '';
@@ -351,7 +368,6 @@
             document.getElementById('total-votes').textContent = total;
         }
 
-        // Countdown
         function updateCountdown() {
             const target = getNextJune30();
             const now = new Date();
@@ -359,13 +375,7 @@
 
             document.getElementById('targetYear').textContent = target.getFullYear();
 
-            if (diff <= 0) {
-                document.getElementById('days').textContent = '000';
-                document.getElementById('hours').textContent = '00';
-                document.getElementById('minutes').textContent = '00';
-                document.getElementById('seconds').textContent = '00';
-                return;
-            }
+            if (diff <= 0) return;
 
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -377,7 +387,6 @@
             document.getElementById('minutes').textContent = pad(minutes);
             document.getElementById('seconds').textContent = pad(seconds);
 
-            // Trigger using winner's offset
             const triggerMs = (cachedWinner.offset || 30) * 1000;
             if (diff <= triggerMs && !audioTriggered) {
                 audioTriggered = true;
@@ -408,27 +417,25 @@
             }
         }
 
-        // Boot everything
         function init() {
-            console.log('%c🚀 DAEMONOPIA Birthday Countdown v3 – Poll should now always appear!', 'color:#00ffff; font-size:16px');
+            console.log('%c🚀 DAEMONOPIA Birthday Countdown v4 – Voting now works in demo mode!', 'color:#00ffff; font-size:16px');
 
-            // Force render poll IMMEDIATELY (this fixes the "not showing" issue)
             renderPoll();
 
-            // Show Firebase status banner if not configured
             if (!isFirebaseReady) {
                 document.getElementById('firebase-status').classList.remove('hidden');
                 document.getElementById('live-indicator').innerHTML = `
                     <span class="inline-block w-2 h-2 bg-amber-400 rounded-full"></span>
                     DEMO MODE
                 `;
+                currentVotes = { classic: 42, rock: 18, cyber: 27 };
+                cachedWinner = songs[1];
+                renderPoll();
             }
 
-            // Start countdown
             updateCountdown();
             setInterval(updateCountdown, 1000);
 
-            // Try to load real votes every 5s (won't break the UI)
             if (isFirebaseReady) {
                 loadVotes().then(() => {
                     cachedWinner = calculateWinner();
@@ -439,19 +446,12 @@
                     cachedWinner = calculateWinner();
                     renderPoll();
                 }, 5000);
-            } else {
-                // Demo votes
-                currentVotes = { classic: 42, rock: 18, cyber: 27 };
-                cachedWinner = songs[1];
-                renderPoll();
             }
 
-            // Overlay replay
             document.getElementById('overlay').addEventListener('click', () => {
                 if (audioTriggered) startConfetti();
             });
 
-            // Test trigger (press B)
             document.addEventListener('keydown', e => {
                 if (e.key.toLowerCase() === 'b') {
                     audioTriggered = false;
