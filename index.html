@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DAEMONOPIA • Birthday Countdown</title>
+    <title>daetronic bday alert!!</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -68,7 +66,7 @@
     <div class="relative z-10 text-center px-6 max-w-5xl mx-auto w-full">
         <div class="mb-8">
             <h1 class="text-5xl md:text-7xl font-bold tracking-[4px] mb-2 bg-gradient-to-r from-pink-400 via-cyan-400 to-pink-400 bg-clip-text text-transparent">
-                DAEMONOPIA'S
+                DAETRONIC'S
             </h1>
             <h2 class="text-6xl md:text-8xl font-bold tracking-widest text-white drop-shadow-2xl">
                 BIRTHDAY
@@ -76,7 +74,7 @@
             <p class="text-cyan-300 text-xl md:text-2xl mt-4 font-mono tracking-[6px]">JUNE 30TH • ALWAYS COUNTING DOWN</p>
         </div>
 
-        <!-- Smaller Countdown -->
+        <!-- Countdown -->
         <div id="countdown" class="flex flex-wrap justify-center gap-4 md:gap-8 items-center bg-black/40 backdrop-blur-xl rounded-3xl p-8 md:p-12 border border-pink-500/30 shadow-2xl shadow-pink-500/20 countdown-grid">
             <div class="text-center">
                 <div id="days" class="countdown-number text-6xl md:text-7xl font-bold text-white tabular-nums">000</div>
@@ -108,47 +106,32 @@
             <span id="targetYear" class="font-bold text-pink-400"></span>
         </div>
 
-        <!-- VOTING POLL -->
+        <!-- Manual Voting Poll -->
         <div class="mt-16 w-full max-w-5xl mx-auto px-4">
             <div class="flex items-center justify-between mb-6">
                 <h3 class="text-3xl font-bold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-pink-400">
-                    VOTE FOR THE BIRTHDAY ANTHEM
+                    CHOOSE THE BIRTHDAY SONG
                 </h3>
-                <div id="live-indicator" class="text-cyan-300 font-mono text-sm flex items-center gap-2">
-                    <span class="inline-block w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                    LIVE GLOBAL VOTES
-                </div>
+                <div class="text-cyan-300 font-mono text-sm">Click to select • Manually edit votes in HTML</div>
             </div>
-
-            <div id="firebase-status" class="hidden mb-6 text-center text-amber-300 text-sm font-mono bg-amber-900/30 border border-amber-400/50 rounded-2xl py-3 px-6">
-                ⚠️ You are in <strong>DEMO MODE</strong>.<br>
-                Votes are saved locally for now.<br>
-                Replace the Firebase config in the code to make votes global for everyone.
-            </div>
-
-            <p class="text-center text-cyan-300/80 mb-8 text-sm md:text-base">
-                Choose the song that will play when the clock hits zero.<br>
-                Each song starts at a different time before midnight!
-            </p>
 
             <div id="poll-container" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Populated by JS with proper event listeners -->
+                <!-- Songs populated by JS -->
             </div>
 
-            <div class="mt-6 flex justify-center items-center gap-3 text-pink-300 text-sm font-mono">
-                <span>TOTAL VOTES SO FAR:</span>
-                <span id="total-votes" class="font-bold text-2xl text-yellow-300">0</span>
+            <div class="mt-8 text-center text-pink-300/70 text-xs font-mono">
+                Tip: Edit the numbers in the HTML code (under "currentVotes") to change vote counts manually.
             </div>
         </div>
     </div>
 
     <audio id="birthdayAudio" preload="none"></audio>
 
-    <!-- Overlay -->
+    <!-- Birthday Overlay -->
     <div id="overlay" class="overlay absolute inset-0 hidden flex items-center justify-center bg-gradient-to-b from-transparent via-black/70 to-black/90 z-20">
         <div class="text-center px-6 max-w-lg">
             <div id="birthdayMessage" class="hidden text-[3.5rem] md:text-7xl font-bold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-yellow-300 to-cyan-400 drop-shadow-[0_0_40px_#ff00ff] leading-none">
-                HAPPY<br>BIRTHDAY<br>DAEMON!
+                HAPPY<br>BIRTHDAY<br>DAEMONOPIA!
             </div>
             <div id="songPlaying" class="hidden mt-6 text-xl md:text-2xl font-mono text-cyan-300"></div>
             <p class="text-cyan-300 text-2xl md:text-3xl mt-8 font-mono tracking-widest animate-pulse">THE MOMENT HAS ARRIVED ✨</p>
@@ -159,30 +142,13 @@
 
     <script>
         // ============================
-        // 🔥 FIREBASE CONFIG — REPLACE THIS!
+        // MANUAL VOTES - EDIT THESE NUMBERS DIRECTLY
         // ============================
-		const firebaseConfig = {
-		  apiKey: "AIzaSyDlUAMtMaDlUTEeCMVEU2mA_y5parDBQ9k",
-		  authDomain: "birthdaycountdown-70695.firebaseapp.com",
-		  projectId: "birthdaycountdown-70695",
-		  storageBucket: "birthdaycountdown-70695.firebasestorage.app",
-		  messagingSenderId: "968518415425",
-		  appId: "1:968518415425:web:546699f9928ff0646142c0",
-		  measurementId: "G-EQFRR8757B"
-		};
-
-        let db = null;
-        let isFirebaseReady = false;
-        try {
-            if (!firebaseConfig.apiKey.includes("REPLACE")) {
-                firebase.initializeApp(firebaseConfig);
-                db = firebase.firestore();
-                isFirebaseReady = true;
-                console.log('%c✅ Firebase connected', 'color:#00ff00');
-            }
-        } catch (e) {
-            console.warn('%c⚠️ Firebase not configured yet', 'color:#ffaa00');
-        }
+        let currentVotes = {
+            classic: 47,
+            rock: 32,
+            cyber: 58
+        };
 
                const songs = [
             {
@@ -201,12 +167,11 @@
                 id: "cyber",
                 name: "CARNIVAL - KanYe West",
                 url: "https://files.catbox.moe/bqz6wc.mp3",	
-                offset: 45    // starts playing 45 seconds BEFORE June 30th
+                offset: 35    // starts playing 45 seconds BEFORE June 30th
             }
         ];
 
-        let currentVotes = {};
-        let cachedWinner = songs[0];
+        let cachedWinner = songs[0];   // will be updated based on votes
         let audioTriggered = false;
         let particles = [];
         let animationFrame;
@@ -273,71 +238,19 @@
             setTimeout(() => { if (confettiRunning) particles = particles.slice(0, 200); }, 45000);
         }
 
-        async function loadVotes() {
-            if (!db) return;
-            try {
-                const doc = await db.collection('poll').doc('birthday').get();
-                if (doc.exists) currentVotes = doc.data().votes || {};
-            } catch (e) {
-                console.warn("Firestore load failed", e);
-            }
-        }
-
-        // ========================
-        // FIXED VOTING FUNCTION (with debug log)
-        // ========================
-        async function castVote(songId) {
-            console.log('🔥 castVote called for song:', songId);   // ← This will appear in console when you click
-
-            if (localStorage.getItem('hasVoted')) {
-                alert("You already voted once! Thanks 🎉");
-                return;
-            }
-
-            // DEMO MODE
-            if (!db || !isFirebaseReady) {
-                currentVotes[songId] = (currentVotes[songId] || 0) + 1;
-                localStorage.setItem('hasVoted', 'true');
-                localStorage.setItem('votedFor', songId);
-                cachedWinner = calculateWinner();
-                renderPoll();
-                alert("✅ Vote recorded in DEMO MODE!\n\nYour vote is saved locally on this device.\nTo make votes global for everyone, replace the Firebase config.");
-                return;
-            }
-
-            // Real Firebase
-            try {
-                await db.collection('poll').doc('birthday').set({
-                    [`votes.${songId}`]: firebase.firestore.FieldValue.increment(1)
-                }, { merge: true });
-
-                localStorage.setItem('hasVoted', 'true');
-                localStorage.setItem('votedFor', songId);
-
-                await loadVotes();
-                cachedWinner = calculateWinner();
-                renderPoll();
-
-                alert("✅ Vote sent to the global poll!");
-            } catch (e) {
-                console.error("Vote error:", e);
-                alert("Vote failed.\n\nCheck console for details (most common cause: Firestore rules not set to allow read/write).");
-            }
-        }
-
         function calculateWinner() {
             let winner = songs[0];
-            let max = currentVotes[songs[0].id] || 0;
-            songs.forEach(s => {
-                const v = currentVotes[s.id] || 0;
-                if (v > max) { max = v; winner = s; }
+            let maxVotes = currentVotes[songs[0].id] || 0;
+            songs.forEach(song => {
+                const votes = currentVotes[song.id] || 0;
+                if (votes > maxVotes) {
+                    maxVotes = votes;
+                    winner = song;
+                }
             });
             return winner;
         }
 
-        // ========================
-        // FIXED: Use createElement + addEventListener instead of innerHTML onclick
-        // ========================
         function renderPoll() {
             const container = document.getElementById('poll-container');
             container.innerHTML = '';
@@ -348,34 +261,52 @@
                 const count = currentVotes[song.id] || 0;
                 const percent = total > 0 ? Math.round((count / total) * 100) : 0;
 
-                // Create card
                 const card = document.createElement('div');
-                card.className = `poll-card bg-black/40 backdrop-blur-xl border border-pink-500/30 rounded-3xl p-6 flex flex-col items-center hover:border-cyan-400`;
-
+                card.className = `poll-card bg-black/40 backdrop-blur-xl border border-pink-500/30 rounded-3xl p-6 flex flex-col items-center hover:border-cyan-400 cursor-pointer`;
+                
                 card.innerHTML = `
                     <div class="text-5xl mb-4">${song.name.split(' ')[0]}</div>
-                    <h4 class="font-bold text-xl mb-1 text-center">${song.name}</h4>
+                    <h4 class="font-bold text-2xl text-center mb-4">${song.name}</h4>
                     <div class="text-6xl font-bold text-yellow-300 mb-4">${count}</div>
                     <div class="w-full bg-gray-800 rounded-3xl h-3 mb-6 overflow-hidden">
                         <div class="h-3 bg-gradient-to-r from-pink-400 to-cyan-400 transition-all" style="width: ${percent}%"></div>
                     </div>
-                    <p class="text-xs text-cyan-300 mt-4 font-mono">▶ starts ${song.offset} seconds before</p>
+                    <p class="text-xs text-cyan-300 font-mono">▶ starts ${song.offset} seconds before</p>
                 `;
 
-                // Create button separately and attach REAL event listener
-                const voteBtn = document.createElement('button');
-                voteBtn.textContent = 'VOTE';
-                voteBtn.className = "w-full mt-6 py-4 bg-gradient-to-r from-pink-500 to-cyan-500 hover:from-cyan-400 hover:to-pink-400 rounded-2xl font-bold tracking-widest text-white text-lg";
-                voteBtn.addEventListener('click', (e) => {
-                    e.stopImmediatePropagation();
-                    castVote(song.id);
+                // Click anywhere on the card to select this song as winner
+                card.addEventListener('click', () => {
+                    cachedWinner = song;
+                    alert(`✅ Selected: ${song.name}\nIt will now play ${song.offset} seconds before midnight.`);
+                    renderPoll(); // refresh to show updated winner if needed
                 });
 
-                card.appendChild(voteBtn);
                 container.appendChild(card);
             });
+        }
 
-            document.getElementById('total-votes').textContent = total;
+        function triggerBirthday() {
+            if (audioTriggered) return;
+            audioTriggered = true;
+
+            const audio = document.getElementById('birthdayAudio');
+            const overlay = document.getElementById('overlay');
+            const message = document.getElementById('birthdayMessage');
+            const songEl = document.getElementById('songPlaying');
+
+            audio.src = cachedWinner.url;
+            audio.load();
+            audio.play().catch(err => console.log("Audio play prevented:", err));
+
+            overlay.classList.remove('hidden');
+            overlay.style.opacity = '1';
+            message.classList.remove('hidden');
+            songEl.textContent = `NOW PLAYING: ${cachedWinner.name}`;
+            songEl.classList.remove('hidden');
+
+            startConfetti();
+
+            console.log(`🎉 Birthday triggered! Playing: ${cachedWinner.name}`);
         }
 
         function updateCountdown() {
@@ -396,77 +327,37 @@
             document.getElementById('hours').textContent = pad(hours);
             document.getElementById('minutes').textContent = pad(minutes);
             document.getElementById('seconds').textContent = pad(seconds);
-
-            const triggerMs = (cachedWinner.offset || 30) * 1000;
-            if (diff <= triggerMs && !audioTriggered) {
-                audioTriggered = true;
-                const audio = document.getElementById('birthdayAudio');
-                const overlay = document.getElementById('overlay');
-                const msg = document.getElementById('birthdayMessage');
-                const songEl = document.getElementById('songPlaying');
-
-                audio.src = cachedWinner.url;
-                audio.load();
-                audio.play().catch(() => {});
-
-                overlay.classList.remove('hidden');
-                overlay.style.opacity = '1';
-                msg.classList.remove('hidden');
-                songEl.textContent = `NOW PLAYING: ${cachedWinner.name}`;
-                songEl.classList.remove('hidden');
-
-                startConfetti();
-            }
         }
 
         function handleResize() {
-            const c = document.getElementById('confetti');
-            if (c && !c.classList.contains('hidden')) {
-                c.width = window.innerWidth;
-                c.height = window.innerHeight;
+            const canvas = document.getElementById('confetti');
+            if (canvas && !canvas.classList.contains('hidden')) {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
             }
         }
 
         function init() {
-            console.log('%c🚀 DAEMONOPIA Birthday Countdown v5 – Voting buttons now use proper event listeners!', 'color:#00ffff; font-size:16px');
+            console.log('%cDaetronci Birthday Countdown ready! Press "B" to instantly trigger birthday mode.', 'color:#00ffff; font-size:16px');
 
+            // Initial render
+            cachedWinner = calculateWinner();
             renderPoll();
-
-            if (!isFirebaseReady) {
-                document.getElementById('firebase-status').classList.remove('hidden');
-                document.getElementById('live-indicator').innerHTML = `
-                    <span class="inline-block w-2 h-2 bg-amber-400 rounded-full"></span>
-                    DEMO MODE
-                `;
-                currentVotes = { classic: 42, rock: 18, cyber: 27 };
-                cachedWinner = songs[1];
-                renderPoll();
-            }
-
             updateCountdown();
+
+            // Update countdown every second
             setInterval(updateCountdown, 1000);
 
-            if (isFirebaseReady) {
-                loadVotes().then(() => {
-                    cachedWinner = calculateWinner();
-                    renderPoll();
-                });
-                setInterval(async () => {
-                    await loadVotes();
-                    cachedWinner = calculateWinner();
-                    renderPoll();
-                }, 5000);
-            }
-
-            document.getElementById('overlay').addEventListener('click', () => {
-                if (audioTriggered) startConfetti();
+            // B key instantly triggers birthday (for testing)
+            document.addEventListener('keydown', (e) => {
+                if (e.key.toLowerCase() === 'b') {
+                    triggerBirthday();
+                }
             });
 
-            document.addEventListener('keydown', e => {
-                if (e.key.toLowerCase() === 'b') {
-                    audioTriggered = false;
-                    updateCountdown();
-                }
+            // Click overlay to replay confetti
+            document.getElementById('overlay').addEventListener('click', () => {
+                if (audioTriggered) startConfetti();
             });
 
             window.addEventListener('resize', handleResize);
